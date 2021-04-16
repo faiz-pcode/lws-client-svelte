@@ -29,7 +29,7 @@
             httpHost: wsHost,
             httpPath: "",
             wsPort: parseInt(wsPort),
-            forceTLS: true,
+            forceTLS: false,
             disableStats: true,
             authEndpoint: wsAuthUrl,
             auth: {
