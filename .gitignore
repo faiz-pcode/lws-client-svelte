@@ -4,4 +4,6 @@
 .DS_Store
 accounts.json
 .env
+.env.live
+.env.local
 /public/accounts.json

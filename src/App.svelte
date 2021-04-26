@@ -2,7 +2,7 @@
     import Pusher from 'pusher-js';
     import { onDestroy } from 'svelte';
     import Account from './components/Account.svelte';
-    import { token, websocket_connected } from './store';
+    import { channel_events, token, websocket_connected } from './store';
 
     const apiUrl = __myapp.env.API_URL;
     const wsAuthUrl = __myapp.env.PUSHER_AUTH_URL;
@@ -10,12 +10,19 @@
     const wsAppId = __myapp.env.PUSHER_APP_ID;
     const wsHost = __myapp.env.WS_HOST;
     const wsPort = __myapp.env.WS_PORT;
+    const tls = __myapp.env.FORCETLS == 'true' ? true : false;
 
     let pusher,
         channel,
-        token_value;
+        token_value,
+        channel_name,
+        events;
 
-    const token_unsubscribe = token.subscribe(value => token_value = value);
+    token.subscribe(value => token_value = value);
+    channel_events.subscribe(value => {
+        channel_name = value.channel;
+        events = value.events;
+    });
 
     onDestroy(() => {
         unsubscribe();
@@ -25,11 +32,10 @@
         console.log('Connecting...');
         pusher = new Pusher(wsAppKey, {
             wsHost: wsHost,
-            wsPath: "",
             httpHost: wsHost,
             httpPath: "",
             wsPort: parseInt(wsPort),
-            forceTLS: false,
+            forceTLS: tls,
             disableStats: true,
             authEndpoint: wsAuthUrl,
             auth: {
@@ -59,33 +65,34 @@
     }
 
     function subscribe() {
-        console.log('Subscribing to private-notification channel')
-        channel = pusher.subscribe('private-notification');
+        console.log(`Subscribing to private-${channel_name} channel`)
+        channel = pusher.subscribe(`private-${channel_name}`);
         
         channel.bind('pusher:subscription_succeeded', () => {
             console.log('Subscription succeeded');
-            console.log('Binding to table-checkin event')
-            channel.bind('table-checkin', (data) => {
-                console.log(data);
-            });
-            console.log('Binding to bill-request event')
-            channel.bind('bill-request', (data) => {
-                console.log(data);
+            events.forEach(event_name => {
+                console.log(`Binding to ${event_name} event`);
+                channel.bind(event_name, (data) => {
+                    console.log("--------------------");
+                    console.log(`${event_name} event!`);
+                    console.log(data);
+                    console.log("--------------------");
+                });
             });
         });
 
         channel.bind('pusher:subscription_error', (err) => {
             console.log('Subscription failed.', err);
             channel.unbind();
-            pusher.unsubscribe('private-notification');
+            pusher.unsubscribe(`private-${channel_name}`);
             channel = null;
         });
     }
 
     function unsubscribe() {
-        console.log('Unsubscribing from private-notification channel')
+        console.log(`Unsubscribing from private-${channel_name} channel`)
         channel.unbind();
-        pusher.unsubscribe('private-notification');
+        pusher.unsubscribe(`private-${channel_name}`);
         channel = null;
     }
 </script>

@@ -1,6 +1,6 @@
 <script>
     
-    import { token, websocket_connected } from '../store.js';
+    import { token, websocket_connected, channel_events } from '../store.js';
     import { onMount } from 'svelte';
 
     let staffId = "", password = "", platform = "", account, ws_connected, disable_logout = true;
@@ -64,6 +64,11 @@
             console.log("data: ", data);
             account = data;
             token.update(val => val = account.token);
+            channel_events.update(val => {
+                val.channel = selected.subList.channel;
+                val.events = selected.subList.events;
+                return val;
+            });
         })
         .catch(error => {
             console.error(error);
@@ -87,6 +92,10 @@
             console.log('Logged Out')
             account = null;
             token.set(null);
+            channel_events.set({
+                "channel": "",
+                "events": []
+            });
         })
         .catch(error => console.error(error));
     }
