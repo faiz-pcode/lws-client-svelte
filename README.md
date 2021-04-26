@@ -13,6 +13,8 @@ cp .env.example .env
 ```
 and edit the .env file according to your local environment setting.
 
+Download the `accounts.json` file from the confluence documentation you came from and put that file in the public folder.
+
 Now you are ready to run the application, run the following command
 ```
 npm run dev
